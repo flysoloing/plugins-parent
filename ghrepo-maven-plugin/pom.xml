@@ -8,11 +8,11 @@
         <artifactId>plugins-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <groupId>com.flysoloing.plugins.codegen</groupId>
-    <artifactId>codegen-maven-plugin</artifactId>
+    <groupId>com.flysoloing.plugins.ghrepo</groupId>
+    <artifactId>ghrepo-maven-plugin</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
-    <name>codegen-maven-plugin</name>
+    <name>ghrepo-maven-plugin</name>
     <url>http://maven.apache.org</url>
 
     <dependencies>
@@ -38,13 +38,13 @@
                 <artifactId>maven-plugin-plugin</artifactId>
                 <configuration>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
-                    </configuration>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>codegen-descriptor</id>
+                        <id>compress-descriptor</id>
                         <phase>process-classes</phase>
                         <!--<goals>-->
-                            <!--<goal>descriptor</goal>-->
+                        <!--<goal>descriptor</goal>-->
                         <!--</goals>-->
                     </execution>
                 </executions>

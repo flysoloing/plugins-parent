@@ -1,4 +1,4 @@
-package com.flysoloing.plugins.codegen.test;
+package com.flysoloing.plugins.ghrepo.test;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -12,10 +12,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 // * @user laitao
 // * @date 2015/10/19 22:46
 // */
-@Mojo( name = "say", requiresProject = true, threadSafe = true, defaultPhase = LifecyclePhase.NONE)
+@Mojo( name = "say3", requiresProject = true, threadSafe = true, defaultPhase = LifecyclePhase.INSTALL)
 public class HelloMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Hello world");
+        getLog().info("Hello world3");
     }
 }
