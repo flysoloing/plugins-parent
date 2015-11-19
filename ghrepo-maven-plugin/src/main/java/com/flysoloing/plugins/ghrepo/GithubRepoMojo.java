@@ -6,8 +6,10 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * 目标是在打包或者安装到本地仓库的同时，把相关包同步更新到本地的github仓库<br>
@@ -18,7 +20,7 @@ import java.io.File;
 @Mojo(name = "flush-local-ghrepo", threadSafe = true, defaultPhase = LifecyclePhase.INSTALL)
 public class GithubRepoMojo extends AbstractMojo {
 
-    private static final char PATH_SEPARATOR = '/';
+    private static final char PATH_SEPARATOR = '\\';
 
     private static final char GROUP_SEPARATOR = '.';
 
@@ -54,28 +56,54 @@ public class GithubRepoMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.packaging}")
     private String projectPackaging;
 
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("flush-local-ghrepo测试");
-        getLog().info("localGhRepoLibsPath = " + localGhRepoLibsPath.toString());
-        getLog().info("localGhRepoPluginsPath = " + localGhRepoPluginsPath.toString());
-
+        getLog().info("localMavenRepoPath = " + localMavenRepoPath.getPath());
+        getLog().info("localGhRepoLibsPath = " + localGhRepoLibsPath.getPath());
+        getLog().info("localGhRepoPluginsPath = " + localGhRepoPluginsPath.getPath());
         getLog().info("projectGroupId = " + projectGroupId);
         getLog().info("projectArtifactId = " + projectArtifactId);
         getLog().info("projectVersion = " + projectVersion);
         getLog().info("projectPackaging = " + projectPackaging);
 
         //将projectGroupId转换为文件路径格式
+        String srcPath = formatRepoPath(localMavenRepoPath.getPath(), projectGroupId);
+        String libsPath = formatRepoPath(localGhRepoLibsPath.getPath(), projectGroupId);
+        String pluginsPath = formatRepoPath(localGhRepoPluginsPath.getPath(), projectGroupId);
 
-
-        //先找到当前project在本地maven仓库的路径
-        String currentProjectLocalMavenRepoPath = localMavenRepoPath + projectGroupId + projectArtifactId;
-        getLog().info("currentProjectLocalMavenRepoPath = " + currentProjectLocalMavenRepoPath);
+        getLog().info("srcPath = " + srcPath);
+        getLog().info("libsPath = " + libsPath);
+        getLog().info("pluginsPath = " + pluginsPath);
 
         //把这个路径下面的所有文件复制到本地github仓库中，如果不存在则新建，否则直接覆盖
-
+        File srcDir = new File(srcPath);
+        File libsDir = new File(libsPath);
+        File pluginsDir = new File(pluginsPath);
+        if (projectPackaging.equals("maven-plugin")){
+            try {
+                FileUtils.copyDirectory(srcDir, pluginsDir);
+            } catch (IOException e) {
+                getLog().error(e);
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                FileUtils.copyDirectory(srcDir, libsDir);
+            } catch (IOException e) {
+                getLog().error(e);
+                e.printStackTrace();
+            }
+        }
     }
 
-    private String getCurrentProject
+    /**
+     * 格式化仓库路径
+     * @param repoPath
+     * @param projectGroupId
+     * @return
+     */
+    private String formatRepoPath(String repoPath, String projectGroupId) {
+        String projectGroupIdPath = projectGroupId.replace(GROUP_SEPARATOR, PATH_SEPARATOR);
+        return repoPath + PATH_SEPARATOR + projectGroupIdPath;
+    }
 }
