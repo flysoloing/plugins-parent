@@ -10,6 +10,7 @@ import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * 目标是在打包或者安装到本地仓库的同时，把相关包同步更新到本地的github仓库<br>
@@ -77,33 +78,71 @@ public class GithubRepoMojo extends AbstractMojo {
 
         //把这个路径下面的所有文件复制到本地github仓库中，如果不存在则新建，否则直接覆盖
         File srcDir = new File(srcPath);
-        File libsDir = new File(libsPath);
-        File pluginsDir = new File(pluginsPath);
-        if (projectPackaging.equals("maven-plugin")){
+        if (projectPackaging.equals("maven-plugin")) {
             try {
-                FileUtils.copyDirectory(srcDir, pluginsDir);
+                copyRepoDirectory(srcDir, localMavenRepoPath.getPath(), localGhRepoPluginsPath.getPath());
             } catch (IOException e) {
                 getLog().error(e);
-                e.printStackTrace();
             }
         } else {
             try {
-                FileUtils.copyDirectory(srcDir, libsDir);
+                copyRepoDirectory(srcDir, localMavenRepoPath.getPath(), localGhRepoLibsPath.getPath());
             } catch (IOException e) {
                 getLog().error(e);
-                e.printStackTrace();
             }
         }
     }
 
     /**
      * 格式化仓库路径
-     * @param repoPath
+     * @param mavenRepoPath
      * @param projectGroupId
      * @return
      */
-    private String formatRepoPath(String repoPath, String projectGroupId) {
+    private String formatRepoPath(String mavenRepoPath, String projectGroupId) {
         String projectGroupIdPath = projectGroupId.replace(GROUP_SEPARATOR, PATH_SEPARATOR);
-        return repoPath + PATH_SEPARATOR + projectGroupIdPath;
+        return mavenRepoPath + PATH_SEPARATOR + projectGroupIdPath;
+    }
+
+    /**
+     * 拷贝源路径下面的文件到目标路径
+     * @param srcPath
+     * @param baseMavenRepoPath
+     * @param baseGhRepoPath
+     * @throws IOException
+     */
+    private void copyRepoDirectory(String srcPath, String baseMavenRepoPath, String baseGhRepoPath) throws IOException {
+        File srcDir = new File(srcPath);
+        copyRepoDirectory(srcDir, baseMavenRepoPath, baseGhRepoPath);
+    }
+
+    /**
+     * 拷贝源路径下面的文件到目标路径
+     * @param srcDir
+     * @param baseMavenRepoPath
+     * @param baseGhRepoPath
+     * @throws IOException
+     */
+    private void copyRepoDirectory(File srcDir, String baseMavenRepoPath, String baseGhRepoPath) throws IOException {
+        List<File> fileList = FileUtils.getFiles(srcDir, null, null);
+        for (File srcFile : fileList) {
+            getLog().info("src file = " + srcFile.getPath());
+            FileUtils.copyFile(srcFile, genDestDir(srcFile, baseMavenRepoPath, baseGhRepoPath));
+        }
+    }
+
+    /**
+     * 生成目标路径
+     * @param srcFile
+     * @param baseMavenRepoPath
+     * @param baseGhRepoPath
+     * @return
+     */
+    private File genDestDir(File srcFile, String baseMavenRepoPath, String baseGhRepoPath) {
+        String srcFilePath = FileUtils.dirname(srcFile.getPath());
+        getLog().info("src file path = " + srcFilePath);
+        String destFilePath = srcFilePath.replace(baseMavenRepoPath, baseGhRepoPath);
+        getLog().info("dest file path = " + destFilePath);
+        return new File(destFilePath);
     }
 }
