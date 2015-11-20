@@ -45,15 +45,27 @@ public class GithubRepoMojo extends AbstractMojo {
     @Parameter(required = true)
     private File localGhRepoPluginsPath;
 
+    /**
+     * 当前project的groupId
+     */
     @Parameter(defaultValue = "${project.groupId}")
     private String projectGroupId;
 
+    /**
+     * 当前project的artifactId
+     */
     @Parameter(defaultValue = "${project.artifactId}")
     private String projectArtifactId;
 
+    /**
+     * 当前project的version
+     */
     @Parameter(defaultValue = "${project.version}")
     private String projectVersion;
 
+    /**
+     * 当前project的packaging
+     */
     @Parameter(defaultValue = "${project.packaging}")
     private String projectPackaging;
 
@@ -68,25 +80,29 @@ public class GithubRepoMojo extends AbstractMojo {
         getLog().info("projectPackaging = " + projectPackaging);
 
         //将projectGroupId转换为文件路径格式
-        String srcPath = formatRepoPath(localMavenRepoPath.getPath(), projectGroupId);
-        String libsPath = formatRepoPath(localGhRepoLibsPath.getPath(), projectGroupId);
-        String pluginsPath = formatRepoPath(localGhRepoPluginsPath.getPath(), projectGroupId);
-
-        getLog().info("srcPath = " + srcPath);
-        getLog().info("libsPath = " + libsPath);
-        getLog().info("pluginsPath = " + pluginsPath);
+        String srcPath = formatRepoPath(localMavenRepoPath.getPath(), projectGroupId, projectArtifactId);
+        File srcDir = new File(srcPath);
+        getLog().info("base src path = " + srcPath);
 
         //把这个路径下面的所有文件复制到本地github仓库中，如果不存在则新建，否则直接覆盖
-        File srcDir = new File(srcPath);
-        if (projectPackaging.equals("maven-plugin")) {
+        if (projectPackaging.equals("pom")) {
             try {
+                copyRepoDirectory(srcDir, localMavenRepoPath.getPath(), localGhRepoLibsPath.getPath());
                 copyRepoDirectory(srcDir, localMavenRepoPath.getPath(), localGhRepoPluginsPath.getPath());
             } catch (IOException e) {
                 getLog().error(e);
             }
-        } else {
+        }
+        if (projectPackaging.equals("jar")) {
             try {
                 copyRepoDirectory(srcDir, localMavenRepoPath.getPath(), localGhRepoLibsPath.getPath());
+            } catch (IOException e) {
+                getLog().error(e);
+            }
+        }
+        if (projectPackaging.equals("maven-plugin")) {
+            try {
+                copyRepoDirectory(srcDir, localMavenRepoPath.getPath(), localGhRepoPluginsPath.getPath());
             } catch (IOException e) {
                 getLog().error(e);
             }
@@ -99,9 +115,9 @@ public class GithubRepoMojo extends AbstractMojo {
      * @param projectGroupId
      * @return
      */
-    private String formatRepoPath(String mavenRepoPath, String projectGroupId) {
+    private String formatRepoPath(String mavenRepoPath, String projectGroupId, String projectArtifactId) {
         String projectGroupIdPath = projectGroupId.replace(GROUP_SEPARATOR, PATH_SEPARATOR);
-        return mavenRepoPath + PATH_SEPARATOR + projectGroupIdPath;
+        return mavenRepoPath + PATH_SEPARATOR + projectGroupIdPath + PATH_SEPARATOR + projectArtifactId;
     }
 
     /**
@@ -126,8 +142,7 @@ public class GithubRepoMojo extends AbstractMojo {
     private void copyRepoDirectory(File srcDir, String baseMavenRepoPath, String baseGhRepoPath) throws IOException {
         List<File> fileList = FileUtils.getFiles(srcDir, null, null);
         for (File srcFile : fileList) {
-            getLog().info("src file = " + srcFile.getPath());
-            FileUtils.copyFile(srcFile, genDestDir(srcFile, baseMavenRepoPath, baseGhRepoPath));
+            FileUtils.copyFileIfModified(srcFile, genDestDir(srcFile, baseMavenRepoPath, baseGhRepoPath));
         }
     }
 
@@ -139,8 +154,8 @@ public class GithubRepoMojo extends AbstractMojo {
      * @return
      */
     private File genDestDir(File srcFile, String baseMavenRepoPath, String baseGhRepoPath) {
-        String srcFilePath = FileUtils.dirname(srcFile.getPath());
-        getLog().info("src file path = " + srcFilePath);
+        String srcFilePath = srcFile.getPath();
+        getLog().info("src file = " + srcFilePath);
         String destFilePath = srcFilePath.replace(baseMavenRepoPath, baseGhRepoPath);
         getLog().info("dest file path = " + destFilePath);
         return new File(destFilePath);
