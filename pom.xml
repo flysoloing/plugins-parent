@@ -83,6 +83,12 @@
             </dependency>
 
             <dependency>
+                <groupId>com.flysoloing.plugins.ghrepo</groupId>
+                <artifactId>ghrepo-maven-plugin</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
                 <version>3.3.3</version>
@@ -95,9 +101,21 @@
             </dependency>
 
             <dependency>
+                <groupId>org.apache.maven.plugin-testing</groupId>
+                <artifactId>maven-plugin-testing-harness</artifactId>
+                <version>3.3.0</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-core</artifactId>
                 <version>3.3.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-project</artifactId>
+                <version>3.0-alpha-2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -176,24 +194,24 @@
                 </executions>
             </plugin>
 
-            <plugin>
-                <groupId>com.flysoloing.plugins.ghrepo</groupId>
-                <artifactId>ghrepo-maven-plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <configuration>
-                    <localGhRepoLibsPath>D:\DevEnv\repo\libs</localGhRepoLibsPath>
-                    <localGhRepoPluginsPath>D:\DevEnv\repo\plugins</localGhRepoPluginsPath>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>flush</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>flush-local-ghrepo</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>com.flysoloing.plugins.ghrepo</groupId>-->
+                <!--<artifactId>ghrepo-maven-plugin</artifactId>-->
+                <!--<version>1.0-SNAPSHOT</version>-->
+                <!--<configuration>-->
+                    <!--<localGhRepoLibsPath>D:\DevEnv\repo\libs</localGhRepoLibsPath>-->
+                    <!--<localGhRepoPluginsPath>D:\DevEnv\repo\plugins</localGhRepoPluginsPath>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>flush</id>-->
+                        <!--<phase>install</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>flush-local-ghrepo</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 
@@ -201,7 +219,7 @@
         <module>codegen-maven-plugin</module>
         <module>compress-maven-plugin</module>
         <module>ghrepo-maven-plugin</module>
-  </modules>
+    </modules>
 
     <profiles>
         <profile>
