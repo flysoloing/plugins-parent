@@ -207,7 +207,7 @@
                         <!--<id>flush</id>-->
                         <!--<phase>install</phase>-->
                         <!--<goals>-->
-                            <!--<goal>flush-local-ghrepo</goal>-->
+                            <!--<goal>sync-ghrepo</goal>-->
                         <!--</goals>-->
                     <!--</execution>-->
                 <!--</executions>-->

@@ -18,7 +18,7 @@ import java.util.List;
  * Date: 15-11-19<br>
  * Time: 下午12:56<br>
  */
-@Mojo(name = "flush-local-ghrepo", threadSafe = true, defaultPhase = LifecyclePhase.INSTALL)
+@Mojo(name = "sync-ghrepo", threadSafe = true, defaultPhase = LifecyclePhase.INSTALL)
 public class GithubRepoMojo extends AbstractMojo {
 
     private static final char PATH_SEPARATOR = '\\';
