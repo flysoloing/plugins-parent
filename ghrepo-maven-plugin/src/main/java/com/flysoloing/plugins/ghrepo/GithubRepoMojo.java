@@ -69,7 +69,6 @@ public class GithubRepoMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.packaging}")
     private String projectPackaging;
 
-    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("localMavenRepoPath = " + localMavenRepoPath.getPath());
         getLog().info("localGhRepoLibsPath = " + localGhRepoLibsPath.getPath());
