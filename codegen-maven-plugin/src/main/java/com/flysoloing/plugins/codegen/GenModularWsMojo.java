@@ -1,13 +1,12 @@
 package com.flysoloing.plugins.codegen;
 
-import com.sun.java.browser.plugin2.DOM;
-import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -75,24 +74,24 @@ public class GenModularWsMojo extends AbstractMojo {
     /**
      * 生成子模块
      * @param parentProject
-     * @param subModuleSuffix
+     * @param subProjectSuffix
      * @return
      */
-    private MavenProject genSubModule(MavenProject parentProject, String subModuleSuffix) {
-        MavenProject subModule = new MavenProject();
-        subModule.setParent(parentProject);
+    private MavenProject genSubModule(MavenProject parentProject, String subProjectSuffix) {
+        MavenProject subProject = new MavenProject();
+        subProject.setParent(parentProject);
 
-        String subModuleGroupId = parentProject.getGroupId() + GROUP_SEPARATOR + subModuleSuffix;
-        String subModuleArtifactId = parentProject.getArtifactId() + ARTIFACT_SEPARATOR + subModuleGroupId;
+        String subModuleGroupId = parentProject.getGroupId() + GROUP_SEPARATOR + subProjectSuffix;
+        String subModuleArtifactId = parentProject.getArtifactId() + ARTIFACT_SEPARATOR + subProjectSuffix;
 
-        subModule.setGroupId(subModuleGroupId);
-        subModule.setArtifactId(subModuleArtifactId);
-        subModule.setVersion(parentProject.getVersion());
-        subModule.setPackaging(JAR_PACKAGING);
-        if (subModuleSuffix.equals(WEB_SUFFIX))
-            subModule.setPackaging(WAR_PACKAGING);
+        subProject.setGroupId(subModuleGroupId);
+        subProject.setArtifactId(subModuleArtifactId);
+        subProject.setVersion(parentProject.getVersion());
+        subProject.setPackaging(JAR_PACKAGING);
+        if (subProjectSuffix.equals(WEB_SUFFIX))
+            subProject.setPackaging(WAR_PACKAGING);
 
-        return subModule;
+        return subProject;
     }
 
     /**
@@ -123,8 +122,8 @@ public class GenModularWsMojo extends AbstractMojo {
         }
 
         //在parentProject的pom文件中增加modules元素，如果存在则添加subProject的artifactId到module中
-        List<String> parentProjectModules = parentProject.getModules();
-        if (parentProjectModules == null) {
+        List<String> parentProjectModules = parentProject.getModules();//TODO 改为文件读取，实时判断
+        if (parentProjectModules == null || parentProjectModules.isEmpty()) {
             SAXReader saxReader = new SAXReader();
             try {
                 Document document = saxReader.read(parentProjectPomFile);
@@ -141,8 +140,24 @@ public class GenModularWsMojo extends AbstractMojo {
             } catch (IOException e) {
                 getLog().error(e);
             }
+        } else if ( !parentProjectModules.contains(subProject.getArtifactId())) {
+            SAXReader saxReader = new SAXReader();
+            try {
+                Document document = saxReader.read(parentProjectPomFile);
+                Element rootElement = document.getRootElement();
+                Element modulesElement = rootElement.element("modules");
+                Element moduleElement = modulesElement.addElement("module");
+                moduleElement.setText(subProject.getArtifactId());
+                OutputFormat format = OutputFormat.createPrettyPrint();
+                XMLWriter xmlWriter = new XMLWriter(new FileWriter(parentProjectPomFile), format);
+                xmlWriter.write(document);
+                xmlWriter.close();
+            } catch (DocumentException e) {
+                getLog().error(e);
+            } catch (IOException e) {
+                getLog().error(e);
+            }
         }
-        //TODO
 
         //创建subProject的artifactId文件夹，pom文件等信息，格式如下：
         //subProject-artifactId
@@ -162,7 +177,31 @@ public class GenModularWsMojo extends AbstractMojo {
         //                  --com
         //                      --flysoloing
         //                          --AppTest.java
+        String subProjectBaseDir = parentProject.getBasedir().getPath() + PATH_SEPARATOR + subProject.getArtifactId();
+        FileUtils.mkdir(subProjectBaseDir);
 
-        //TODO
+        File subProjectPomFile = new File(subProjectBaseDir + PATH_SEPARATOR + "pom.xml");
+        try {
+            subProjectPomFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String subProjectSrcMainJavaDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "java" + PATH_SEPARATOR + pathOf(subProject.getGroupId());
+        String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "resources";
+        String subProjectSrcMainWebappDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "webapp";
+        FileUtils.mkdir(subProjectSrcMainJavaDir);
+
+        String subProjectSrcTestJavaDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "test" + PATH_SEPARATOR + "java" + PATH_SEPARATOR + pathOf(subProject.getGroupId());;;
+        FileUtils.mkdir(subProjectSrcTestJavaDir);
+    }
+
+    /**
+     * 将groupId转换为文件目录结构
+     * @param groupId
+     * @return
+     */
+    private String pathOf(String groupId) {
+        return groupId.replace(GROUP_SEPARATOR, PATH_SEPARATOR);
     }
 }
