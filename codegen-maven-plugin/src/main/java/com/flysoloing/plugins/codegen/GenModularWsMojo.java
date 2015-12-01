@@ -59,8 +59,8 @@ public class GenModularWsMojo extends AbstractMojo {
 
         //以当前项目坐标为基础，创建子模块，common，domain，rpc，service，dao，manager，web等
         installSubModule(parentProject, genSubModule(parentProject, COMMON_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, DOMAIN_SUFFIX));
         installSubModule(parentProject, genSubModule(parentProject, DAO_SUFFIX));
+        installSubModule(parentProject, genSubModule(parentProject, DOMAIN_SUFFIX));
         installSubModule(parentProject, genSubModule(parentProject, MANAGER_SUFFIX));
         installSubModule(parentProject, genSubModule(parentProject, RPC_SUFFIX));
         installSubModule(parentProject, genSubModule(parentProject, SERVICE_SUFFIX));
@@ -102,61 +102,50 @@ public class GenModularWsMojo extends AbstractMojo {
     private void installSubModule(MavenProject parentProject, MavenProject subProject) {
         File parentProjectPomFile = parentProject.getFile();
 
-        //判断parentProject的packaging类型，如果不是pom，则修改为pom
-        if (!parentProject.getPackaging().equals(POM_PACKAGING)) {
+        try {
             SAXReader saxReader = new SAXReader();
-            try {
-                Document document = saxReader.read(parentProjectPomFile);
-                Element rootElement = document.getRootElement();
-                Element packagingElement = rootElement.element("packaging");
-                packagingElement.setText(POM_PACKAGING);
-                OutputFormat format = OutputFormat.createPrettyPrint();
-                XMLWriter xmlWriter = new XMLWriter(new FileWriter(parentProjectPomFile), format);
-                xmlWriter.write(document);
-                xmlWriter.close();
-            } catch (DocumentException e) {
-                getLog().error(e);
-            } catch (IOException e) {
-                getLog().error(e);
-            }
-        }
+            Document document = saxReader.read(parentProjectPomFile);
+            Element rootElement = document.getRootElement();
 
-        //在parentProject的pom文件中增加modules元素，如果存在则添加subProject的artifactId到module中
-        List<String> parentProjectModules = parentProject.getModules();//TODO 改为文件读取，实时判断
-        if (parentProjectModules == null || parentProjectModules.isEmpty()) {
-            SAXReader saxReader = new SAXReader();
-            try {
-                Document document = saxReader.read(parentProjectPomFile);
-                Element rootElement = document.getRootElement();
-                Element modulesElement = rootElement.addElement("modules");
+            //判断parentProject的packaging类型，如果不是pom，则修改为pom
+            Element packagingElement = rootElement.element("packaging");
+            if (!packagingElement.getText().equals(POM_PACKAGING)) {
+                packagingElement.setText(POM_PACKAGING);
+            }
+
+            //在parentProject的pom文件中增加modules元素，如果存在则添加subProject的artifactId到module中
+            Element modulesElement = rootElement.element("modules");
+            if (modulesElement == null) {
+                modulesElement = rootElement.addElement("modules");
                 Element moduleElement = modulesElement.addElement("module");
                 moduleElement.setText(subProject.getArtifactId());
-                OutputFormat format = OutputFormat.createPrettyPrint();
-                XMLWriter xmlWriter = new XMLWriter(new FileWriter(parentProjectPomFile), format);
-                xmlWriter.write(document);
-                xmlWriter.close();
-            } catch (DocumentException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                getLog().error(e);
+            } else {
+                List elementList = modulesElement.elements("module");
+                if (elementList.isEmpty()) {
+                    Element moduleElement = modulesElement.addElement("module");
+                    moduleElement.setText(subProject.getArtifactId());
+                } else {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (Object object : elementList) {
+                        Element element = (Element) object;
+                        stringBuilder.append(element.getText()).append(",");
+                    }
+                    String artifactIdStr = stringBuilder.toString();
+                    if (!artifactIdStr.contains(subProject.getArtifactId())) {
+                        Element moduleElement = modulesElement.addElement("module");
+                        moduleElement.setText(subProject.getArtifactId());
+                    }
+                }
             }
-        } else if ( !parentProjectModules.contains(subProject.getArtifactId())) {
-            SAXReader saxReader = new SAXReader();
-            try {
-                Document document = saxReader.read(parentProjectPomFile);
-                Element rootElement = document.getRootElement();
-                Element modulesElement = rootElement.element("modules");
-                Element moduleElement = modulesElement.addElement("module");
-                moduleElement.setText(subProject.getArtifactId());
-                OutputFormat format = OutputFormat.createPrettyPrint();
-                XMLWriter xmlWriter = new XMLWriter(new FileWriter(parentProjectPomFile), format);
-                xmlWriter.write(document);
-                xmlWriter.close();
-            } catch (DocumentException e) {
-                getLog().error(e);
-            } catch (IOException e) {
-                getLog().error(e);
-            }
+
+            OutputFormat format = OutputFormat.createPrettyPrint();
+            XMLWriter xmlWriter = new XMLWriter(new FileWriter(parentProjectPomFile), format);
+            xmlWriter.write(document);
+            xmlWriter.close();
+        } catch (DocumentException e) {
+            getLog().error(e);
+        }catch (IOException e) {
+            getLog().error(e);
         }
 
         //创建subProject的artifactId文件夹，pom文件等信息，格式如下：
@@ -180,6 +169,7 @@ public class GenModularWsMojo extends AbstractMojo {
         String subProjectBaseDir = parentProject.getBasedir().getPath() + PATH_SEPARATOR + subProject.getArtifactId();
         FileUtils.mkdir(subProjectBaseDir);
 
+        //TODO 读取模板
         File subProjectPomFile = new File(subProjectBaseDir + PATH_SEPARATOR + "pom.xml");
         try {
             subProjectPomFile.createNewFile();
@@ -191,6 +181,10 @@ public class GenModularWsMojo extends AbstractMojo {
         String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "resources";
         String subProjectSrcMainWebappDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "webapp";
         FileUtils.mkdir(subProjectSrcMainJavaDir);
+        if (subProject.getPackaging().equals(WAR_PACKAGING)) {
+            FileUtils.mkdir(subProjectSrcMainResourcesDir);
+            FileUtils.mkdir(subProjectSrcMainWebappDir);
+        }
 
         String subProjectSrcTestJavaDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "test" + PATH_SEPARATOR + "java" + PATH_SEPARATOR + pathOf(subProject.getGroupId());;;
         FileUtils.mkdir(subProjectSrcTestJavaDir);
