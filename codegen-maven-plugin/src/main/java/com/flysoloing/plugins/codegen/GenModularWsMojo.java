@@ -1,5 +1,9 @@
 package com.flysoloing.plugins.codegen;
 
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -14,9 +18,7 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -57,14 +59,24 @@ public class GenModularWsMojo extends AbstractMojo {
             throw new MojoFailureException(message);
         }
 
+        Configuration configuration = new Configuration(Configuration.VERSION_2_3_22);
+        try {
+            configuration.setDirectoryForTemplateLoading(new File("/template"));//TODO
+        } catch (IOException e) {
+            getLog().error(e);
+            throw new MojoFailureException(e.toString());
+        }
+        configuration.setDefaultEncoding("UTF-8");
+        configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+
         //以当前项目坐标为基础，创建子模块，common，domain，rpc，service，dao，manager，web等
-        installSubModule(parentProject, genSubModule(parentProject, COMMON_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, DAO_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, DOMAIN_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, MANAGER_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, RPC_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, SERVICE_SUFFIX));
-        installSubModule(parentProject, genSubModule(parentProject, WEB_SUFFIX));
+        installSubModule(parentProject, genSubModule(parentProject, COMMON_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, DAO_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, DOMAIN_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, MANAGER_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, RPC_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, SERVICE_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, WEB_SUFFIX), configuration);
 
         //为每个子模块增加基础配置等等
 
@@ -105,8 +117,9 @@ public class GenModularWsMojo extends AbstractMojo {
      * 安装子模块
      * @param parentProject
      * @param subProject
+     * @param configuration
      */
-    private void installSubModule(MavenProject parentProject, MavenProject subProject) {
+    private void installSubModule(MavenProject parentProject, MavenProject subProject, Configuration configuration) {
         File parentProjectPomFile = parentProject.getFile();
 
         try {
@@ -176,13 +189,21 @@ public class GenModularWsMojo extends AbstractMojo {
         String subProjectBaseDir = parentProject.getBasedir().getPath() + PATH_SEPARATOR + subProject.getArtifactId();
         FileUtils.mkdir(subProjectBaseDir);
 
-        //TODO 读取模板
-        File subProjectPomFile = new File(subProjectBaseDir + PATH_SEPARATOR + "pom.xml");
         try {
-            subProjectPomFile.createNewFile();
+            Template template = configuration.getTemplate("pom.ftl");
+            Writer writer = new OutputStreamWriter(new FileOutputStream(subProjectBaseDir + PATH_SEPARATOR + "pom.xml"), "UTF-8");
+            template.process(subProject, writer);
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (TemplateException e) {
+            e.printStackTrace();
         }
+//        File subProjectPomFile = new File(subProjectBaseDir + PATH_SEPARATOR + "pom.xml");
+//        try {
+//            subProjectPomFile.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         String subProjectSrcMainJavaDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "java" + PATH_SEPARATOR + pathOf(subProject.getGroupId());
         String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "resources";
