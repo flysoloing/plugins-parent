@@ -48,7 +48,7 @@ public class GenModularWsMojo extends AbstractMojo {
     private MavenProject parentProject;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("This goal is running...");
+        getLog().info("The gen-modular-ws goal is running...");
 
         //当前项目必须是一个普通的项目，即packaging不能为pom，war，等等
         if (!parentProject.getPackaging().equals(JAR_PACKAGING)) {
@@ -90,6 +90,13 @@ public class GenModularWsMojo extends AbstractMojo {
         subProject.setPackaging(JAR_PACKAGING);
         if (subProjectSuffix.equals(WEB_SUFFIX))
             subProject.setPackaging(WAR_PACKAGING);
+
+        getLog().info("Using following parameters for creating sub module project: ");
+        getLog().info("----------------------------------------------------------------------------");
+        getLog().info("Parameter: groupId, Value: " + subProject.getGroupId());
+        getLog().info("Parameter: artifactId, Value: " + subProject.getArtifact());
+        getLog().info("Parameter: version, Value: " + subProject.getVersion());
+        getLog().info("Parameter: package, Value: " + subProject.getPackaging());
 
         return subProject;
     }
