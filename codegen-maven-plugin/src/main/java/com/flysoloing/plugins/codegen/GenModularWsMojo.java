@@ -61,7 +61,9 @@ public class GenModularWsMojo extends AbstractMojo {
 
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_22);
         try {
-            configuration.setDirectoryForTemplateLoading(new File("/template"));//TODO
+            String templateDir = this.getClass().getClassLoader().getResource("template").getPath();
+            getLog().info(templateDir);
+            configuration.setDirectoryForTemplateLoading(new File(templateDir));//TODO
         } catch (IOException e) {
             getLog().error(e);
             throw new MojoFailureException(e.toString());
