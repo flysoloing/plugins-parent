@@ -1,8 +1,8 @@
-##title
+##杂记
 
-mvn compile:compile 
-mvn plugin:descriptor 
-mvn install 
+1. mvn compile:compile 
+2. mvn plugin:descriptor 
+3. mvn install 
 
 www.oracle.com/webfolder/technetwork/jsc/xml/ns/javaee/index.html 
 
@@ -34,3 +34,25 @@ Servlet 3.1
 ```
 
 Servlet 4.0
+
+Maven标准工程结构：
+```
+project
+|-- pom.xml
+|-- src
+|   |-- main
+|       |-- java
+|       |   |-- com
+|       |       |-- flysoloing
+|       |           |-- App.java
+|       |-- resources
+|       |-- webapp
+|           |-- WEB-INF]
+|               |-- web.xml
+|   |-- test
+|       |-- java
+|       |   |-- com
+|       |       |-- flysoloing
+|       |           |-- AppTest.java
+|       |-- resources
+```

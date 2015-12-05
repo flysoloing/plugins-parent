@@ -19,7 +19,6 @@ import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 
 import java.io.*;
-import java.net.URL;
 import java.util.List;
 
 /**
@@ -47,14 +46,17 @@ public class GenModularWsMojo extends AbstractMojo {
     private static final String WAR_PACKAGING = "war";
     private static final String POM_PACKAGING = "pom";
 
-    private static final String BASE_TEMPLATE_DIR = "/template";
+    private static final String BASE_TEMPLATE_DIR = "\\template";
+
+    private static final String MAVEN_SRC_MAIN_JAVA_DIR = "src\\main\\java";
+    private static final String MAVEN_SRC_MAIN_RESOURCES_DIR = "src\\main\\resources";
+    private static final String MAVEN_SRC_MAIN_WEBAPP_DIR = "src\\main\\webapp";
+    private static final String MAVEN_SRC_TEST_JAVA_DIR = "src\\test\\java";
 
     @Parameter(defaultValue = "${project}")
     private MavenProject parentProject;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("The gen-modular-ws goal is running...");
-
         //当前项目必须是一个普通的项目，即packaging不能为pom，war，等等
         if (!parentProject.getPackaging().equals(JAR_PACKAGING)) {
             String message = "The current project packaging type must match \"jar\"! '";
@@ -102,12 +104,13 @@ public class GenModularWsMojo extends AbstractMojo {
         if (subProjectSuffix.equals(WEB_SUFFIX))
             subProject.setPackaging(WAR_PACKAGING);
 
-        getLog().info("Using following parameters for creating sub module project: ");
+        getLog().info("Using following parameters for creating " + subProjectSuffix + " sub module project: ");
         getLog().info("----------------------------------------------------------------------------");
         getLog().info("Parameter: groupId, Value: " + subProject.getGroupId());
         getLog().info("Parameter: artifactId, Value: " + subProject.getArtifactId());
         getLog().info("Parameter: version, Value: " + subProject.getVersion());
         getLog().info("Parameter: package, Value: " + subProject.getPackaging());
+        getLog().info("\r\n");
 
         return subProject;
     }
@@ -167,25 +170,14 @@ public class GenModularWsMojo extends AbstractMojo {
             getLog().error(e);
         }
 
-        //创建subProject的artifactId文件夹，pom文件等信息，Maven标准工程目录格式如下：
-        //subProject-artifactId
-        //|-- pom.xml
-        //|-- src
-        //|   |-- main
-        //|       |-- java
-        //|       |   |-- com
-        //|       |       |-- flysoloing
-        //|       |           |-- App.java
-        //|       |-- resources
-        //|       |-- webapp
-        //|           |-- WEB-INF]
-        //|               |-- web.xml
-        //|   |-- test
-        //|       |-- java
-        //|       |   |-- com
-        //|       |       |-- flysoloing
-        //|       |           |-- AppTest.java
-        //|       |-- resources
+        //移除parentProject下面的src目录
+        try {
+            FileUtils.forceDelete(parentProject.getBasedir().getPath() + PATH_SEPARATOR + "src");
+        } catch (IOException e) {
+            getLog().error(e);
+        }
+
+        //创建subProject基础目录
         String subProjectBaseDir = parentProject.getBasedir().getPath() + PATH_SEPARATOR + subProject.getArtifactId();
         FileUtils.mkdir(subProjectBaseDir);
 
@@ -195,24 +187,34 @@ public class GenModularWsMojo extends AbstractMojo {
         processTemplate(configuration, pomTemplateFilePath, pomTargetFilePath, subProject);
 
         //创建subProject的src/main/java目录
-        String subProjectSrcMainJavaDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "java" + PATH_SEPARATOR + pathOf(subProject.getGroupId());
+        String subProjectSrcMainJavaDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_MAIN_JAVA_DIR + PATH_SEPARATOR + pathOf(subProject.getGroupId());
         FileUtils.mkdir(subProjectSrcMainJavaDir);
+
+        //创建subProject的src/main/java目录下App.java文件
+        String appTemplateFilePath = "App.ftl";
+        String appTargetFilePath = subProjectSrcMainJavaDir + PATH_SEPARATOR + "App.java";
+        processTemplate(configuration, appTemplateFilePath, appTargetFilePath, subProject);
 
         //如果packaging为war类型，创建subProject的src/main/resources目录和src/main/webapp目录
         if (subProject.getPackaging().equals(WAR_PACKAGING)) {
-            String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "resources";
-            String subProjectSrcMainWebappDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "main" + PATH_SEPARATOR + "webapp";
+            String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_MAIN_RESOURCES_DIR;
+            String subProjectSrcMainWebappDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_MAIN_WEBAPP_DIR + PATH_SEPARATOR + "WEB-INF";
             FileUtils.mkdir(subProjectSrcMainResourcesDir);
             FileUtils.mkdir(subProjectSrcMainWebappDir);
 
             String webTemplateFilePath = "web.ftl";
-            String webTargetFilePath = subProjectSrcMainWebappDir + PATH_SEPARATOR + "WEB-INF" + PATH_SEPARATOR + "web.xml";
+            String webTargetFilePath = subProjectSrcMainWebappDir + PATH_SEPARATOR + "web.xml";
             processTemplate(configuration, webTemplateFilePath, webTargetFilePath, subProject);
         }
 
         //创建subProject的src/test/java目录
-        String subProjectSrcTestJavaDir = subProjectBaseDir + PATH_SEPARATOR + "src" + PATH_SEPARATOR + "test" + PATH_SEPARATOR + "java" + PATH_SEPARATOR + pathOf(subProject.getGroupId());;;
+        String subProjectSrcTestJavaDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_TEST_JAVA_DIR + PATH_SEPARATOR + pathOf(subProject.getGroupId());
         FileUtils.mkdir(subProjectSrcTestJavaDir);
+
+        //创建subProject的src/test/java目录下AppTest.java文件
+        String appTestTemplateFilePath = "AppTest.ftl";
+        String appTestTargetFilePath = subProjectSrcTestJavaDir + PATH_SEPARATOR + "AppTest.java";
+        processTemplate(configuration, appTestTemplateFilePath, appTestTargetFilePath, subProject);
     }
 
     /**
