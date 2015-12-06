@@ -19,6 +19,7 @@ import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,6 +54,8 @@ public class GenModularWsMojo extends AbstractMojo {
     private static final String MAVEN_SRC_MAIN_WEBAPP_DIR = "src\\main\\webapp";
     private static final String MAVEN_SRC_TEST_JAVA_DIR = "src\\test\\java";
 
+    private static final String CHARSET_UTF_8 = "UTF-8";
+
     @Parameter(defaultValue = "${project}")
     private MavenProject parentProject;
 
@@ -66,7 +69,7 @@ public class GenModularWsMojo extends AbstractMojo {
 
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_22);
         configuration.setClassForTemplateLoading(this.getClass(), BASE_TEMPLATE_DIR);
-        configuration.setDefaultEncoding("UTF-8");
+        configuration.setDefaultEncoding(CHARSET_UTF_8);
         configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
 
         //以当前项目坐标为基础，创建子模块，common，domain，rpc，service，dao，manager，web等
@@ -90,12 +93,15 @@ public class GenModularWsMojo extends AbstractMojo {
      * @return
      */
     private MavenProject genSubModule(MavenProject parentProject, String subProjectSuffix) {
-        MavenProject subProject = new MavenProject();
-        subProject.setParent(parentProject);
-
         String subModuleGroupId = parentProject.getGroupId() + GROUP_SEPARATOR + subProjectSuffix;
         String subModuleArtifactId = parentProject.getArtifactId() + ARTIFACT_SEPARATOR + subProjectSuffix;
 
+        List<String> modules = parentProject.getModel().getModules();
+        modules.add(subModuleArtifactId);
+        parentProject.getModel().setModules(modules);
+        parentProject.setPackaging(POM_PACKAGING);
+
+        MavenProject subProject = new MavenProject();
         subProject.setParent(parentProject);
         subProject.setGroupId(subModuleGroupId);
         subProject.setArtifactId(subModuleArtifactId);
@@ -122,63 +128,21 @@ public class GenModularWsMojo extends AbstractMojo {
      * @param configuration
      */
     private void installSubModule(MavenProject parentProject, MavenProject subProject, Configuration configuration) {
-        File parentProjectPomFile = parentProject.getFile();
-
-        try {
-            SAXReader saxReader = new SAXReader();
-            Document document = saxReader.read(parentProjectPomFile);
-            Element rootElement = document.getRootElement();
-
-            //判断parentProject的packaging类型，如果不是pom，则修改为pom
-            Element packagingElement = rootElement.element("packaging");
-            if (!packagingElement.getText().equals(POM_PACKAGING)) {
-                packagingElement.setText(POM_PACKAGING);
-            }
-
-            //在parentProject的pom文件中增加modules元素，如果存在则添加subProject的artifactId到module中
-            Element modulesElement = rootElement.element("modules");
-            if (modulesElement == null) {
-                modulesElement = rootElement.addElement("modules");
-                Element moduleElement = modulesElement.addElement("module");
-                moduleElement.setText(subProject.getArtifactId());
-            } else {
-                List elementList = modulesElement.elements("module");
-                if (elementList.isEmpty()) {
-                    Element moduleElement = modulesElement.addElement("module");
-                    moduleElement.setText(subProject.getArtifactId());
-                } else {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for (Object object : elementList) {
-                        Element element = (Element) object;
-                        stringBuilder.append(element.getText()).append(",");
-                    }
-                    String artifactIdStr = stringBuilder.toString();
-                    if (!artifactIdStr.contains(subProject.getArtifactId())) {
-                        Element moduleElement = modulesElement.addElement("module");
-                        moduleElement.setText(subProject.getArtifactId());
-                    }
-                }
-            }
-
-            OutputFormat format = OutputFormat.createPrettyPrint();
-            XMLWriter xmlWriter = new XMLWriter(new FileWriter(parentProjectPomFile), format);
-            xmlWriter.write(document);
-            xmlWriter.close();
-        } catch (DocumentException e) {
-            getLog().error(e);
-        }catch (IOException e) {
-            getLog().error(e);
-        }
+        //在parentProject的pom文件中增加modules元素，如果存在则添加subProject的artifactId到module中
+        String parentProjectBaseDir = parentProject.getBasedir().getPath();
+        String parentPomTemplateFilePath = "parentPom.ftl";
+        String parentPomTargetFilePath = parentProjectBaseDir + PATH_SEPARATOR + "pom.xml";
+        processTemplate(configuration, parentPomTemplateFilePath, parentPomTargetFilePath, parentProject);
 
         //移除parentProject下面的src目录
         try {
-            FileUtils.forceDelete(parentProject.getBasedir().getPath() + PATH_SEPARATOR + "src");
+            FileUtils.forceDelete(parentProjectBaseDir + PATH_SEPARATOR + "src");
         } catch (IOException e) {
             getLog().error(e);
         }
 
         //创建subProject基础目录
-        String subProjectBaseDir = parentProject.getBasedir().getPath() + PATH_SEPARATOR + subProject.getArtifactId();
+        String subProjectBaseDir = parentProjectBaseDir + PATH_SEPARATOR + subProject.getArtifactId();
         FileUtils.mkdir(subProjectBaseDir);
 
         //创建subProject的pom文件
@@ -236,7 +200,7 @@ public class GenModularWsMojo extends AbstractMojo {
     private void processTemplate(Configuration configuration, String templateFilePath, String targetFilePath, Object dataObj) {
         try {
             Template template = configuration.getTemplate(templateFilePath);
-            Writer writer = new OutputStreamWriter(new FileOutputStream(targetFilePath), "UTF-8");
+            Writer writer = new OutputStreamWriter(new FileOutputStream(targetFilePath), CHARSET_UTF_8);
             template.process(dataObj, writer);
         } catch (IOException e) {
             getLog().error(e);
