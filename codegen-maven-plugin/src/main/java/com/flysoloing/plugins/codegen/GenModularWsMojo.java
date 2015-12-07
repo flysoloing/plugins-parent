@@ -36,8 +36,9 @@ public class GenModularWsMojo extends AbstractMojo {
     private static final char ARTIFACT_SEPARATOR = '-';
 
     private static final String COMMON_SUFFIX = "common";
-    private static final String DOMAIN_SUFFIX = "domain";
     private static final String DAO_SUFFIX = "dao";
+    private static final String DOMAIN_SUFFIX = "domain";
+    private static final String EXPORT_SUFFIX = "export";
     private static final String MANAGER_SUFFIX = "manager";
     private static final String RPC_SUFFIX = "rpc";
     private static final String SERVICE_SUFFIX = "service";
@@ -67,15 +68,17 @@ public class GenModularWsMojo extends AbstractMojo {
             throw new MojoFailureException(message);
         }
 
+        //初始化freemarker模板引擎配置信息
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_22);
         configuration.setClassForTemplateLoading(this.getClass(), BASE_TEMPLATE_DIR);
         configuration.setDefaultEncoding(CHARSET_UTF_8);
         configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
 
-        //以当前项目坐标为基础，创建子模块，common，domain，rpc，service，dao，manager，web等
+        //以当前项目坐标为基础，创建子模块，common，domain，export，rpc，service，dao，manager，web等
         installSubModule(parentProject, genSubModule(parentProject, COMMON_SUFFIX), configuration);
         installSubModule(parentProject, genSubModule(parentProject, DAO_SUFFIX), configuration);
         installSubModule(parentProject, genSubModule(parentProject, DOMAIN_SUFFIX), configuration);
+        installSubModule(parentProject, genSubModule(parentProject, EXPORT_SUFFIX), configuration);
         installSubModule(parentProject, genSubModule(parentProject, MANAGER_SUFFIX), configuration);
         installSubModule(parentProject, genSubModule(parentProject, RPC_SUFFIX), configuration);
         installSubModule(parentProject, genSubModule(parentProject, SERVICE_SUFFIX), configuration);
@@ -159,11 +162,13 @@ public class GenModularWsMojo extends AbstractMojo {
         String appTargetFilePath = subProjectSrcMainJavaDir + PATH_SEPARATOR + "App.java";
         processTemplate(configuration, appTemplateFilePath, appTargetFilePath, subProject);
 
-        //如果packaging为war类型，创建subProject的src/main/resources目录和src/main/webapp目录
+        //创建subProject的src/main/resources目录
+        String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_MAIN_RESOURCES_DIR;
+        FileUtils.mkdir(subProjectSrcMainResourcesDir);
+
+        //如果packaging为war类型，创建src/main/webapp目录
         if (subProject.getPackaging().equals(WAR_PACKAGING)) {
-            String subProjectSrcMainResourcesDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_MAIN_RESOURCES_DIR;
             String subProjectSrcMainWebappDir = subProjectBaseDir + PATH_SEPARATOR + MAVEN_SRC_MAIN_WEBAPP_DIR + PATH_SEPARATOR + "WEB-INF";
-            FileUtils.mkdir(subProjectSrcMainResourcesDir);
             FileUtils.mkdir(subProjectSrcMainWebappDir);
 
             String webTemplateFilePath = "web.ftl";
