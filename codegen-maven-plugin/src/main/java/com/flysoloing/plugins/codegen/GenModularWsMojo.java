@@ -69,14 +69,14 @@ public class GenModularWsMojo extends AbstractMojo {
         installSubModule(parentProject, webSubModule, configuration);
 
         //为每个子模块增加基础配置等等
-        buildSubModule(commonSubModule, configuration);
-        buildSubModule(daoSubModule, configuration);
-        buildSubModule(domainSubModule, configuration);
-        buildSubModule(exportSubModule, configuration);
-        buildSubModule(managerSubModule, configuration);
-        buildSubModule(rpcSubModule, configuration);
-        buildSubModule(serviceSubModule, configuration);
-        buildSubModule(webSubModule, configuration);
+        buildSubModule(parentProject, commonSubModule, configuration);
+        buildSubModule(parentProject, daoSubModule, configuration);
+        buildSubModule(parentProject, domainSubModule, configuration);
+        buildSubModule(parentProject, exportSubModule, configuration);
+        buildSubModule(parentProject, managerSubModule, configuration);
+        buildSubModule(parentProject, rpcSubModule, configuration);
+        buildSubModule(parentProject, serviceSubModule, configuration);
+        buildSubModule(parentProject, webSubModule, configuration);
 
     }
 
@@ -207,13 +207,24 @@ public class GenModularWsMojo extends AbstractMojo {
 
     /**
      * 构建子模块基础配置
+     * @param parentProject
      * @param subProject
      * @param configuration
      */
-    private void buildSubModule(MavenProject subProject, Configuration configuration) {
+    private void buildSubModule(MavenProject parentProject, MavenProject subProject, Configuration configuration) {
+        String parentProjectBaseDir = parentProject.getBasedir().getPath();
+        String subProjectBaseDir = parentProjectBaseDir + Constants.PATH_SEPARATOR + subProject.getArtifactId();
+        String subProjectSrcMainJavaDir = subProjectBaseDir + Constants.PATH_SEPARATOR + Constants.MAVEN_SRC_MAIN_JAVA_DIR + Constants.PATH_SEPARATOR + pathOf(subProject.getGroupId());
+
         String subProjectSuffix = getSubProjectSuffix(subProject.getGroupId());
         if (Constants.COMMON_SUFFIX.equals(subProjectSuffix)) {
             //TODO 生成自定义异常
+            String exceptionDir = subProjectSrcMainJavaDir + Constants.PATH_SEPARATOR + "exception";
+            FileUtils.mkdir(exceptionDir);
+
+            String templateFilePath = "/common/AppRuntimeException.ftl";
+            String targetFilePath = exceptionDir + Constants.PATH_SEPARATOR + "AppRuntimeException.java";
+            processTemplate(configuration, templateFilePath, targetFilePath, subProject);
         }
         if (Constants.DAO_SUFFIX.equals(subProjectSuffix)) {
             //TODO 生成示例mapper和mapper-xml文件
