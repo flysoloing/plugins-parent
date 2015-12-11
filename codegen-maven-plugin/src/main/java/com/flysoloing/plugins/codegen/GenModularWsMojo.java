@@ -237,6 +237,11 @@ public class GenModularWsMojo extends AbstractMojo {
         }
         if (Constants.DOMAIN_SUFFIX.equals(subProjectSuffix)) {
             //TODO 生成示例domain
+            String poDir = subProjectSrcMainJavaDir + Constants.PATH_SEPARATOR + "po";
+            FileUtils.mkdir(poDir);
+
+            String voDir = subProjectSrcMainJavaDir + Constants.PATH_SEPARATOR + "vo";
+            FileUtils.mkdir(voDir);
         }
         if (Constants.EXPORT_SUFFIX.equals(subProjectSuffix)) {
             //TODO 生成基础的bean和示例resource
