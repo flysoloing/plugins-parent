@@ -205,6 +205,12 @@ public class GenModularWsMojo extends AbstractMojo {
         }
     }
 
+    private void processTemplate(Configuration configuration, File templateFileDir, File targetFileDir, Object dataObj) {
+        if (templateFileDir.isDirectory()) {
+            //TODO
+        }
+    }
+
     /**
      * 构建子模块基础配置
      * @param parentProject
@@ -234,6 +240,44 @@ public class GenModularWsMojo extends AbstractMojo {
         }
         if (Constants.EXPORT_SUFFIX.equals(subProjectSuffix)) {
             //TODO 生成基础的bean和示例resource
+            String beanDir = subProjectSrcMainJavaDir + Constants.PATH_SEPARATOR + "bean";
+            FileUtils.mkdir(beanDir);
+
+            String templateFilePath = "/export/AbstractResult.ftl";
+            String targetFilePath = beanDir + Constants.PATH_SEPARATOR + "AbstractResult.java";
+            processTemplate(configuration, templateFilePath, targetFilePath, subProject);
+
+            String templateFilePath1 = "/export/BasicResult.ftl";
+            String targetFilePath1 = beanDir + Constants.PATH_SEPARATOR + "BasicResult.java";
+            processTemplate(configuration, templateFilePath1, targetFilePath1, subProject);
+
+            String templateFilePath2 = "/export/GenericResult.ftl";
+            String targetFilePath2 = beanDir + Constants.PATH_SEPARATOR + "GenericResult.java";
+            processTemplate(configuration, templateFilePath2, targetFilePath2, subProject);
+
+            String templateFilePath3 = "/export/ListResult.ftl";
+            String targetFilePath3 = beanDir + Constants.PATH_SEPARATOR + "ListResult.java";
+            processTemplate(configuration, templateFilePath3, targetFilePath3, subProject);
+
+            String templateFilePath4 = "/export/MapResult.ftl";
+            String targetFilePath4 = beanDir + Constants.PATH_SEPARATOR + "MapResult.java";
+            processTemplate(configuration, templateFilePath4, targetFilePath4, subProject);
+
+            String templateFilePath5 = "/export/Pagination.ftl";
+            String targetFilePath5 = beanDir + Constants.PATH_SEPARATOR + "Pagination.java";
+            processTemplate(configuration, templateFilePath5, targetFilePath5, subProject);
+
+            String templateFilePath6 = "/export/PaginationQuery.ftl";
+            String targetFilePath6 = beanDir + Constants.PATH_SEPARATOR + "PaginationQuery.java";
+            processTemplate(configuration, templateFilePath6, targetFilePath6, subProject);
+
+            String templateFilePath7 = "/export/PaginationResult.ftl";
+            String targetFilePath7 = beanDir + Constants.PATH_SEPARATOR + "PaginationResult.java";
+            processTemplate(configuration, templateFilePath7, targetFilePath7, subProject);
+
+            String templateFilePath8 = "/export/Query.ftl";
+            String targetFilePath8 = beanDir + Constants.PATH_SEPARATOR + "Query.java";
+            processTemplate(configuration, templateFilePath8, targetFilePath8, subProject);
         }
         if (Constants.MANAGER_SUFFIX.equals(subProjectSuffix)) {
             //TODO 暂时不知道干啥
