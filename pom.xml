@@ -12,7 +12,7 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
 
-    <name>plugins-parent</name>
+    <name>${project.artifactId}</name>
     <url>https://github.com/flysoloing/plugins-parent</url>
     <description>The parent pom of flysoloing plugins source code</description>
     <inceptionYear>2014</inceptionYear>
