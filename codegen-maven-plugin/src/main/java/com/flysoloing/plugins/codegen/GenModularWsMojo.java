@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 该Mojo作用是生成多模块WS服务工程<br>
+ * 该Mojo作用是生成多模块WebService服务工程<br>
  * User: laitao<br>
  * Date: 2015/11/23<br>
  * Time: 23:38<br>
