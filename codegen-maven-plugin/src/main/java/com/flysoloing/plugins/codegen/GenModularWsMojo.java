@@ -139,7 +139,7 @@ public class GenModularWsMojo extends AbstractMojo {
         String subProjectBaseDir = parentProjectBaseDir + Constants.PATH_SEPARATOR + subProject.getArtifactId();
         FileUtils.mkdir(subProjectBaseDir);
 
-        //创建subProject的pom文件
+        //生成subProject的pom文件
         String pomTemplateFilePath = "pom.ftl";
         String pomTargetFilePath = subProjectBaseDir + Constants.PATH_SEPARATOR + "pom.xml";
         processTemplate(configuration, pomTemplateFilePath, pomTargetFilePath, subProject);
@@ -148,7 +148,7 @@ public class GenModularWsMojo extends AbstractMojo {
         String subProjectSrcMainJavaDir = subProjectBaseDir + Constants.PATH_SEPARATOR + Constants.MAVEN_SRC_MAIN_JAVA_DIR + Constants.PATH_SEPARATOR + pathOf(subProject.getGroupId());
         FileUtils.mkdir(subProjectSrcMainJavaDir);
 
-        //创建subProject的src/main/java目录下App.java文件
+        //生成subProject的src/main/java目录下App.java文件
         String appTemplateFilePath = "App.ftl";
         String appTargetFilePath = subProjectSrcMainJavaDir + Constants.PATH_SEPARATOR + "App.java";
         processTemplate(configuration, appTemplateFilePath, appTargetFilePath, subProject);
@@ -171,7 +171,7 @@ public class GenModularWsMojo extends AbstractMojo {
         String subProjectSrcTestJavaDir = subProjectBaseDir + Constants.PATH_SEPARATOR + Constants.MAVEN_SRC_TEST_JAVA_DIR + Constants.PATH_SEPARATOR + pathOf(subProject.getGroupId());
         FileUtils.mkdir(subProjectSrcTestJavaDir);
 
-        //创建subProject的src/test/java目录下AppTest.java文件
+        //生成subProject的src/test/java目录下AppTest.java文件
         String appTestTemplateFilePath = "AppTest.ftl";
         String appTestTargetFilePath = subProjectSrcTestJavaDir + Constants.PATH_SEPARATOR + "AppTest.java";
         processTemplate(configuration, appTestTemplateFilePath, appTestTargetFilePath, subProject);
