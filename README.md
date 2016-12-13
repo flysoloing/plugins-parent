@@ -2,7 +2,10 @@
 
 ## 准备工作
 
-1. 在`pom.xml`中引入第三方远程仓库设置
+1. 引入第三方远程仓库设置，有两种方式
+
+* 在`~/MVN_HOME/conf/settings.xml`中，找到`<profiles>...</profiles>`，作为profile添加
+* 在需要使用插件的工程中，找到`pom.xml`，引入如下第三方远程仓库
 
 ```xml
 <!-- private remote libs repository -->
@@ -38,7 +41,7 @@
 </pluginRepositories>
 ```
 
-2. 在`pom.xml`中引入plugin设置
+2. 在需要使用插件的工程中，找到`pom.xml`，引入如下plugin设置
 
 ```xml
 <build>
