@@ -19,7 +19,9 @@
         </snapshots>
     </repository>
 </repositories>
+```
 
+```xml
 <!-- private remote plugins repository -->
 <pluginRepositories>
     <pluginRepository>
